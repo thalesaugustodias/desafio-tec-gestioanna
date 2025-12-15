@@ -1,0 +1,6 @@
+@ConsultaDeCreditos.API_HostAddress = http://localhost:5222
+
+GET {{ConsultaDeCreditos.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
