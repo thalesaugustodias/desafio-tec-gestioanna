@@ -18,7 +18,9 @@ public static class DependencyInjection
 {
     public static IServiceCollection AdicionarInfrastrutura(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        var connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' não encontrada. Configure no appsettings.json ou na variável de ambiente 'ConnectionStrings__DefaultConnection'.");
         
         services.AddDbContext<ConsultaCreditosDbContext>(options =>
         {

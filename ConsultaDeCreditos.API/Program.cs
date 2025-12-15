@@ -62,13 +62,11 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 var app = builder.Build();
 
-// Usar forwarded headers ANTES de outros middlewares
 app.UseForwardedHeaders();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-// Swagger disponível em todos os ambientes para facilitar testes
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -78,7 +76,6 @@ app.UseSwaggerUI(c =>
 
 app.UseCors("AllowAll");
 
-// HTTPS Redirection apenas em Development (em produção o proxy já faz isso)
 if (app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
@@ -88,7 +85,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Health Check Endpoints
 app.MapHealthChecks("/self", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
 {
     Predicate = check => check.Tags.Contains("self")
