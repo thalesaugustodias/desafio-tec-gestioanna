@@ -1,6 +1,7 @@
 using ConsultaDeCreditos.API.HealthChecks;
 using ConsultaDeCreditos.API.Middlewares;
 using ConsultaDeCreditos.IoC;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,24 +52,37 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Configurar forwarded headers para funcionar atrás de proxy/load balancer (Render, Azure, AWS, etc.)
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var app = builder.Build();
+
+// Usar forwarded headers ANTES de outros middlewares
+app.UseForwardedHeaders();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-if (app.Environment.IsDevelopment())
+// Swagger disponível em todos os ambientes para facilitar testes
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "API de Créditos v1");
-        c.RoutePrefix = string.Empty;
-    });
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "API de Créditos v1");
+    c.RoutePrefix = string.Empty;
+});
 
 app.UseCors("AllowAll");
 
-app.UseHttpsRedirection();
+// HTTPS Redirection apenas em Development (em produção o proxy já faz isso)
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthorization();
 
